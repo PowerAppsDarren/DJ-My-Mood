@@ -1361,22 +1361,6 @@ declare global {
   }
 }
 
-// Temporary implementation - creates a test tone for debugging
-const createTestAudioBuffer = (audioContext: AudioContext, duration: number = 0.5): AudioBuffer => {
-  const sampleRate = audioContext.sampleRate;
-  const buffer = audioContext.createBuffer(2, sampleRate * duration, sampleRate);
-  
-  for (let channel = 0; channel < 2; channel++) {
-    const channelData = buffer.getChannelData(channel);
-    for (let i = 0; i < channelData.length; i++) {
-      // Generate a simple sine wave at 440Hz (A4 note)
-      channelData[i] = Math.sin(2 * Math.PI * 440 * i / sampleRate) * 0.1;
-    }
-  }
-  
-  return buffer;
-};
-
 // Mock session for testing - generates test tones based on prompts
 class MockMusicSession implements LiveMusicSession {
   private intervalId: number | null = null;
@@ -1427,15 +1411,3 @@ class MockMusicSession implements LiveMusicSession {
     // In a real implementation, this would update the music generation
   }
 }
-
-// Updated AI object with mock implementation
-const ai = {
-  live: {
-    music: {
-      connect: async (config: any): Promise<LiveMusicSession> => {
-        console.warn('Using mock music session for testing - real API not yet available');
-        return new MockMusicSession(config.callbacks);
-      }
-    }
-  }
-};
