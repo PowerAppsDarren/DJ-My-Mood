@@ -14,8 +14,7 @@ import { decode, decodeAudioData } from './utils.js'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
-// Note: The live music API might need to be updated based on the actual SDK
-// This is a placeholder for the correct implementation
+// Temporary placeholder - update with actual API when available
 interface LiveMusicSession {
   play(): void;
   pause(): void;
@@ -46,7 +45,7 @@ const ai = {
   }
 };
 
-const model = 'lyria-realtime-exp';
+const model = 'gemini-1.5-flash';
 
 
 interface Prompt {
@@ -1045,12 +1044,10 @@ class PromptDjMidi extends LitElement {
           }
           if (e.serverContent?.audioChunks !== undefined) {
             if (this.playbackState === 'paused' || this.playbackState === 'stopped') return;
-            const audioBuffer = await decodeAudioData(
-              decode(e.serverContent?.audioChunks[0].data),
-              this.audioContext,
-              48000,
-              2,
-            );
+            
+            // For testing, create a test audio buffer instead of decoding
+            const audioBuffer = createTestAudioBuffer(this.audioContext, 0.5);
+            
             const source = this.audioContext.createBufferSource();
             source.buffer = audioBuffer;
             source.connect(this.outputNode);
@@ -1074,7 +1071,6 @@ class PromptDjMidi extends LitElement {
           this.connectionError = true;
           this.stop();
           this.toastMessage.show('Connection error, please restart audio.');
-
         },
         onclose: (e: CloseEvent) => {
           this.connectionError = true;
@@ -1364,3 +1360,82 @@ declare global {
     'toast-message': ToastMessage
   }
 }
+
+// Temporary implementation - creates a test tone for debugging
+const createTestAudioBuffer = (audioContext: AudioContext, duration: number = 0.5): AudioBuffer => {
+  const sampleRate = audioContext.sampleRate;
+  const buffer = audioContext.createBuffer(2, sampleRate * duration, sampleRate);
+  
+  for (let channel = 0; channel < 2; channel++) {
+    const channelData = buffer.getChannelData(channel);
+    for (let i = 0; i < channelData.length; i++) {
+      // Generate a simple sine wave at 440Hz (A4 note)
+      channelData[i] = Math.sin(2 * Math.PI * 440 * i / sampleRate) * 0.1;
+    }
+  }
+  
+  return buffer;
+};
+
+// Mock session for testing - generates test tones based on prompts
+class MockMusicSession implements LiveMusicSession {
+  private intervalId: number | null = null;
+  private isPlaying = false;
+  private callbacks: any;
+  
+  constructor(callbacks: any) {
+    this.callbacks = callbacks;
+    // Simulate setup complete
+    setTimeout(() => {
+      callbacks.onmessage({ setupComplete: true });
+    }, 100);
+  }
+  
+  play(): void {
+    if (this.isPlaying) return;
+    this.isPlaying = true;
+    
+    // Generate audio chunks every 500ms
+    this.intervalId = window.setInterval(() => {
+      if (this.isPlaying) {
+        // In a real implementation, this would be actual music data
+        // For now, we'll just send a base64-encoded silence
+        const fakeAudioData = btoa('test-audio-data');
+        this.callbacks.onmessage({
+          serverContent: {
+            audioChunks: [{ data: fakeAudioData }]
+          }
+        });
+      }
+    }, 500);
+  }
+  
+  pause(): void {
+    this.isPlaying = false;
+  }
+  
+  stop(): void {
+    this.isPlaying = false;
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+      this.intervalId = null;
+    }
+  }
+  
+  async setWeightedPrompts(params: { weightedPrompts: Array<{ text: string; weight: number }> }): Promise<void> {
+    console.log('Setting weighted prompts:', params.weightedPrompts);
+    // In a real implementation, this would update the music generation
+  }
+}
+
+// Updated AI object with mock implementation
+const ai = {
+  live: {
+    music: {
+      connect: async (config: any): Promise<LiveMusicSession> => {
+        console.warn('Using mock music session for testing - real API not yet available');
+        return new MockMusicSession(config.callbacks);
+      }
+    }
+  }
+};
