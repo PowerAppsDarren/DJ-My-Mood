@@ -1,0 +1,20 @@
+{
+  "name": "dj-my-mood",
+  "version": "1.0.0",
+  "description": "Control real-time music with a MIDI controller",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0",
+    "lit": "^3.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "vite": "^6.3.5"
+  }
+}
